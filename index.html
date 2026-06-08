@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>队列传递演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+        .container {
+            width: 100%;
+            max-width: 900px;
+            padding: 10px;
+        }
+        svg {
+            width: 100%;
+            height: auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .info {
+            margin-top: 15px;
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            min-width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <svg viewBox="0 0 900 400" preserveAspectRatio="xMidYMid meet">
+            <defs>
+                <linearGradient id="ballGradientA" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#00cec9;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#0984e3;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="ballGradientB" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#fdcb6e;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#e17055;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="runnerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#ee5a24;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="refGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#6c5ce7;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#a29bfe;stop-opacity:1" />
+                </linearGradient>
+                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.3"/>
+                </filter>
+            </defs>
+            
+
+            
+            <rect x="380" y="320" width="140" height="60" rx="8" fill="rgba(108,92,231,0.2)" />
+            <text x="450" y="355" text-anchor="middle" fill="#a29bfe" font-size="18" font-weight="bold">裁判</text>
+            
+            <g id="groupA"></g>
+            <g id="groupB"></g>
+            <g id="runner"></g>
+            <circle id="refBall" cx="450" cy="280" r="30" fill="url(#refGradient)" filter="url(#shadow)" stroke="white" stroke-width="3" />
+            <text x="450" y="285" text-anchor="middle" fill="white" font-size="16" font-weight="bold">⚖</text>
+        </svg>
+    </div>
+    
+    <div class="controls">
+        <button id="startBtn">开始传递</button>
+        <button id="resetBtn">重置</button>
+    </div>
+    
+    <div class="info">
+        点击「开始传递」观看完整演示
+    </div>
+    
+    <div class="status" id="status">准备就绪</div>
+
+    <script>
+        const GROUP_A_X_START = 280;
+        const GROUP_B_X_START = 700;
+        const Y_POSITION = 150;
+        const BALL_SPACING = 80;
+        const BALL_RADIUS = 25;
+        const REF_X = 450;
+        const REF_Y = 280;
+
+        let groupA = ['A1', 'A2', 'A3', 'A4'];
+        let groupB = ['B1', 'B2', 'B3', 'B4'];
+        let isAnimating = false;
+
+        function renderGroups() {
+            const groupAG = document.getElementById('groupA');
+            const groupBG = document.getElementById('groupB');
+            
+            groupAG.innerHTML = '';
+            groupBG.innerHTML = '';
+            
+            groupA.forEach((item, index) => {
+                const x = GROUP_A_X_START - index * BALL_SPACING;
+                drawBall(groupAG, x, Y_POSITION, item, 'A');
+            });
+            
+            groupB.forEach((item, index) => {
+                const x = GROUP_B_X_START - index * BALL_SPACING;
+                drawBall(groupBG, x, Y_POSITION, item, 'B');
+            });
+        }
+
+        function drawBall(container, x, y, label, group) {
+            const gradient = group === 'A' ? 'url(#ballGradientA)' : 'url(#ballGradientB)';
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', x);
+            circle.setAttribute('cy', y);
+            circle.setAttribute('r', BALL_RADIUS);
+            circle.setAttribute('fill', gradient);
+            circle.setAttribute('filter', 'url(#shadow)');
+            circle.setAttribute('stroke', 'white');
+            circle.setAttribute('stroke-width', '2');
+            container.appendChild(circle);
+            
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', x);
+            text.setAttribute('y', y + 6);
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('fill', 'white');
+            text.setAttribute('font-size', '14');
+            text.setAttribute('font-weight', 'bold');
+            text.textContent = label;
+            container.appendChild(text);
+        }
+
+        function drawRunner(x, y, label) {
+            const runnerG = document.getElementById('runner');
+            runnerG.innerHTML = '';
+            
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', x);
+            circle.setAttribute('cy', y);
+            circle.setAttribute('r', BALL_RADIUS);
+            circle.setAttribute('fill', 'url(#runnerGradient)');
+            circle.setAttribute('filter', 'url(#shadow)');
+            circle.setAttribute('stroke', 'white');
+            circle.setAttribute('stroke-width', '3');
+            runnerG.appendChild(circle);
+            
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', x);
+            text.setAttribute('y', y + 6);
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('fill', 'white');
+            text.setAttribute('font-size', '14');
+            text.setAttribute('font-weight', 'bold');
+            text.textContent = label;
+            runnerG.appendChild(text);
+        }
+
+        function clearRunner() {
+            document.getElementById('runner').innerHTML = '';
+        }
+
+        async function moveRunner(x1, y1, x2, y2, label) {
+            return new Promise((resolve) => {
+                const steps = 20;
+                const duration = 600;
+                const stepTime = duration / steps;
+                
+                const dx = (x2 - x1) / steps;
+                const dy = (y2 - y1) / steps;
+                
+                let currentStep = 0;
+                
+                const animate = () => {
+                    if (currentStep >= steps) {
+                        drawRunner(x2, y2, label);
+                        setTimeout(resolve, 200);
+                        return;
+                    }
+                    
+                    const x = x1 + dx * currentStep;
+                    const y = y1 + dy * currentStep;
+                    drawRunner(x, y, label);
+                    
+                    currentStep++;
+                    setTimeout(animate, stepTime);
+                };
+                
+                animate();
+            });
+        }
+
+        async function transfer(fromGroup, toGroup, isAToB) {
+            if (fromGroup.length === 0) return;
+            
+            const runnerLabel = fromGroup.shift();
+            const fromX = isAToB ? GROUP_A_X_START : GROUP_B_X_START;
+            const toX = isAToB ? GROUP_B_X_START : GROUP_A_X_START;
+            
+            renderGroups();
+            await moveRunner(fromX, Y_POSITION, toX, Y_POSITION, runnerLabel);
+            
+            toGroup.push(runnerLabel);
+            clearRunner();
+            renderGroups();
+            
+            await delay(300);
+        }
+
+        async function finalTransfer() {
+            const runnerLabel = 'B4';
+            
+            const b4Index = groupB.indexOf(runnerLabel);
+            const startX = GROUP_B_X_START - b4Index * BALL_SPACING;
+            
+            await moveRunner(startX, Y_POSITION, REF_X, REF_Y, runnerLabel);
+            clearRunner();
+            renderGroups();
+            await delay(500);
+            
+            groupB.splice(b4Index, 1);
+            groupA.push(runnerLabel);
+            renderGroups();
+            await delay(300);
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function startDemo() {
+            if (isAnimating) return;
+            
+            isAnimating = true;
+            document.getElementById('startBtn').disabled = true;
+            const status = document.getElementById('status');
+            
+            groupA = ['A1', 'A2', 'A3', 'A4'];
+            groupB = ['B1', 'B2', 'B3', 'B4'];
+            renderGroups();
+            
+            status.textContent = 'A1 → B组';
+            await transfer(groupA, groupB, true);
+            
+            status.textContent = 'B1 → A组';
+            await transfer(groupB, groupA, false);
+            
+            status.textContent = 'A2 → B组';
+            await transfer(groupA, groupB, true);
+            
+            status.textContent = 'B2 → A组';
+            await transfer(groupB, groupA, false);
+            
+            status.textContent = 'A3 → B组';
+            await transfer(groupA, groupB, true);
+            
+            status.textContent = 'B3 → A组';
+            await transfer(groupB, groupA, false);
+            
+            status.textContent = 'A4 → B组';
+            await transfer(groupA, groupB, true);
+            
+            status.textContent = 'B4 → 裁判';
+            await finalTransfer();
+            
+            status.textContent = '传递完成！';
+            isAnimating = false;
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        function resetDemo() {
+            if (isAnimating) return;
+            
+            groupA = ['A1', 'A2', 'A3', 'A4'];
+            groupB = ['B1', 'B2', 'B3', 'B4'];
+            clearRunner();
+            renderGroups();
+            document.getElementById('status').textContent = '准备就绪';
+        }
+
+        document.getElementById('startBtn').addEventListener('click', startDemo);
+        document.getElementById('resetBtn').addEventListener('click', resetDemo);
+
+        renderGroups();
+    </script>
+</body>
+</html>
