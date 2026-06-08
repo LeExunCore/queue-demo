@@ -130,8 +130,8 @@
     <div class="status" id="status">准备就绪</div>
 
     <script>
-        const GROUP_A_X_START = 370;
-        const GROUP_B_X_START = 530;
+        const GROUP_A_X_START = 150;
+        const GROUP_B_X_START = 750;
         const Y_POSITION = 180;
         const BALL_SPACING = 80;
         const BALL_RADIUS = 25;
@@ -150,7 +150,7 @@
             groupBG.innerHTML = '';
 
             groupA.forEach((item, index) => {
-                const x = GROUP_A_X_START - index * BALL_SPACING;
+                const x = GROUP_A_X_START + index * BALL_SPACING;
                 drawBall(groupAG, x, Y_POSITION, item, 'A');
             });
 
