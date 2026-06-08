@@ -150,12 +150,12 @@
             groupBG.innerHTML = '';
 
             groupA.forEach((item, index) => {
-                const x = GROUP_A_X_START + index * BALL_SPACING;
+                const x = GROUP_A_X_START - index * BALL_SPACING;
                 drawBall(groupAG, x, Y_POSITION, item, 'A');
             });
 
             groupB.forEach((item, index) => {
-                const x = GROUP_B_X_START - index * BALL_SPACING;
+                const x = GROUP_B_X_START + index * BALL_SPACING;
                 drawBall(groupBG, x, Y_POSITION, item, 'B');
             });
         }
