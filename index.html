@@ -106,12 +106,10 @@
                     <feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.3"/>
                 </filter>
             </defs>
-            
 
-            
             <rect x="380" y="320" width="140" height="60" rx="8" fill="rgba(108,92,231,0.2)" />
             <text x="450" y="355" text-anchor="middle" fill="#a29bfe" font-size="18" font-weight="bold">裁判</text>
-            
+
             <g id="groupA"></g>
             <g id="groupB"></g>
             <g id="runner"></g>
@@ -119,16 +117,16 @@
             <text x="450" y="285" text-anchor="middle" fill="white" font-size="16" font-weight="bold">⚖</text>
         </svg>
     </div>
-    
+
     <div class="controls">
         <button id="startBtn">开始传递</button>
         <button id="resetBtn">重置</button>
     </div>
-    
+
     <div class="info">
         点击「开始传递」观看完整演示
     </div>
-    
+
     <div class="status" id="status">准备就绪</div>
 
     <script>
@@ -147,15 +145,15 @@
         function renderGroups() {
             const groupAG = document.getElementById('groupA');
             const groupBG = document.getElementById('groupB');
-            
+
             groupAG.innerHTML = '';
             groupBG.innerHTML = '';
-            
+
             groupA.forEach((item, index) => {
                 const x = GROUP_A_X_START - index * BALL_SPACING;
                 drawBall(groupAG, x, Y_POSITION, item, 'A');
             });
-            
+
             groupB.forEach((item, index) => {
                 const x = GROUP_B_X_START - index * BALL_SPACING;
                 drawBall(groupBG, x, Y_POSITION, item, 'B');
@@ -173,7 +171,7 @@
             circle.setAttribute('stroke', 'white');
             circle.setAttribute('stroke-width', '2');
             container.appendChild(circle);
-            
+
             const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             text.setAttribute('x', x);
             text.setAttribute('y', y + 6);
@@ -188,7 +186,7 @@
         function drawRunner(x, y, label) {
             const runnerG = document.getElementById('runner');
             runnerG.innerHTML = '';
-            
+
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             circle.setAttribute('cx', x);
             circle.setAttribute('cy', y);
@@ -198,7 +196,7 @@
             circle.setAttribute('stroke', 'white');
             circle.setAttribute('stroke-width', '3');
             runnerG.appendChild(circle);
-            
+
             const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             text.setAttribute('x', x);
             text.setAttribute('y', y + 6);
@@ -219,59 +217,59 @@
                 const steps = 20;
                 const duration = 600;
                 const stepTime = duration / steps;
-                
+
                 const dx = (x2 - x1) / steps;
                 const dy = (y2 - y1) / steps;
-                
+
                 let currentStep = 0;
-                
+
                 const animate = () => {
                     if (currentStep >= steps) {
                         drawRunner(x2, y2, label);
                         setTimeout(resolve, 200);
                         return;
                     }
-                    
+
                     const x = x1 + dx * currentStep;
                     const y = y1 + dy * currentStep;
                     drawRunner(x, y, label);
-                    
+
                     currentStep++;
                     setTimeout(animate, stepTime);
                 };
-                
+
                 animate();
             });
         }
 
         async function transfer(fromGroup, toGroup, isAToB) {
             if (fromGroup.length === 0) return;
-            
+
             const runnerLabel = fromGroup.shift();
             const fromX = isAToB ? GROUP_A_X_START : GROUP_B_X_START;
             const toX = isAToB ? GROUP_B_X_START : GROUP_A_X_START;
-            
+
             renderGroups();
             await moveRunner(fromX, Y_POSITION, toX, Y_POSITION, runnerLabel);
-            
+
             toGroup.push(runnerLabel);
             clearRunner();
             renderGroups();
-            
+
             await delay(300);
         }
 
         async function finalTransfer() {
             const runnerLabel = 'B4';
-            
+
             const b4Index = groupB.indexOf(runnerLabel);
             const startX = GROUP_B_X_START - b4Index * BALL_SPACING;
-            
+
             await moveRunner(startX, Y_POSITION, REF_X, REF_Y, runnerLabel);
             clearRunner();
             renderGroups();
             await delay(500);
-            
+
             groupB.splice(b4Index, 1);
             groupA.push(runnerLabel);
             renderGroups();
@@ -284,39 +282,39 @@
 
         async function startDemo() {
             if (isAnimating) return;
-            
+
             isAnimating = true;
             document.getElementById('startBtn').disabled = true;
             const status = document.getElementById('status');
-            
+
             groupA = ['A1', 'A2', 'A3', 'A4'];
             groupB = ['B1', 'B2', 'B3', 'B4'];
             renderGroups();
-            
+
             status.textContent = 'A1 → B组';
             await transfer(groupA, groupB, true);
-            
+
             status.textContent = 'B1 → A组';
             await transfer(groupB, groupA, false);
-            
+
             status.textContent = 'A2 → B组';
             await transfer(groupA, groupB, true);
-            
+
             status.textContent = 'B2 → A组';
             await transfer(groupB, groupA, false);
-            
+
             status.textContent = 'A3 → B组';
             await transfer(groupA, groupB, true);
-            
+
             status.textContent = 'B3 → A组';
             await transfer(groupB, groupA, false);
-            
+
             status.textContent = 'A4 → B组';
             await transfer(groupA, groupB, true);
-            
+
             status.textContent = 'B4 → 裁判';
             await finalTransfer();
-            
+
             status.textContent = '传递完成！';
             isAnimating = false;
             document.getElementById('startBtn').disabled = false;
@@ -324,7 +322,7 @@
 
         function resetDemo() {
             if (isAnimating) return;
-            
+
             groupA = ['A1', 'A2', 'A3', 'A4'];
             groupB = ['B1', 'B2', 'B3', 'B4'];
             clearRunner();
