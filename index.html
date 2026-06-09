@@ -28,9 +28,21 @@
         svg {
             width: 100%;
             height: auto;
+            min-width: 900px;
+            max-width: 100%;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        @media (max-width: 900px) {
+            svg {
+                width: 900px;
+                height: auto;
+            }
+            .container {
+                overflow-x: auto;
+                overflow-y: hidden;
+            }
         }
         .controls {
             margin-top: 20px;
@@ -84,7 +96,7 @@
 </head>
 <body>
     <div class="container">
-        <svg viewBox="0 0 900 400" preserveAspectRatio="xMidYMid meet">
+        <svg viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid meet">
             <defs>
                 <linearGradient id="ballGradientA" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" style="stop-color:#00cec9;stop-opacity:1" />
